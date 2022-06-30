@@ -1,11 +1,10 @@
+
 //FACTORY FUNCTION FOR CREATING PLAYERS
 const player = function (mark) {
     return {
         mark
     }
 }
-
-
 
 
 //MODULE FOR HANDLING GAMEBOARD DATA
@@ -15,6 +14,7 @@ const gameboardData = (() => {
 
     function createGameboard() {
         gameboard = [];
+        freeSquares = [];
         for (i = 0; i < 9; i++) {
             let newSquare = document.createElement('div');
             newSquare.classList.add('square');
@@ -33,8 +33,6 @@ const gameboardData = (() => {
         getGameboard
     }
 })();
-
-
 
 
 //MODULE FOR TAKING CARE OF UI.
@@ -73,51 +71,54 @@ const displayController = (() => {
 })();
 
 
-
-
-
-
-
-
-
-
 //MODULE FOR GAME FLOW AND LOGIC
 const gameControl = (() => {
-
+    
+    
     let player1;
-    let player2;
+    let computerAI;
     let currentPlayer;
-    let moves;
+    let totalMoves;
     let win;
 
     newGame();
 
-    //Resets all previous conditions and starts a new game.
-    //Clears the gameboard and renders and ampty gameboard.
+    //Sets up a new game by reseting all previous conditions and clears the gameboard and renders an empty gameboard.
     function newGame() {
         player1 = player('X');
-        player2 = player('O');
+        computerAI = player('O');
         currentPlayer = player1;
-        moves = 9;
+        totalMoves = 9;
         win = false;
-
         gameboardData.createGameboard();
         displayController.renderGameboard();
         displayController.clearGameOver();
     }
 
 
-    /* Sets a currentPlayers mark on the gameboard and calls for function to check if they have won, or if its a draw. if not, changeplayer and continue the game. */
+    /* Sets a currentPlayers mark on the gameboard and calls for function to check for conditions for game over. if not, changeplayer and continue the game. If square is already filled or game is already won, cannot click the square.
+    
+    This function first launches when a player has pressed a gameboard square. And after that it is automatically called again for AIs turn. */
     function setMark(square) {
-        if (square.textContent || win) return;
+        if (currentPlayer == computerAI) square = aiChooseSquare();
+        if (square.textContent || win) return; 
         square.textContent = currentPlayer.mark;
-        moves--;
+        totalMoves--;
         if (checkForGameOver()) gameOver();
         else changeCurrentPlayer();
     }
 
-    /*Sets the logic for conditions for the ending of the game: win or a draw.
-    */ 
+    /*Randomly chooses an empty square from the gameboard array for the AI to set mark on. */
+    function aiChooseSquare(){
+        let randomIndex = Math.floor(Math.random() * (8 - 0 + 1) + 0);
+        while (gameboardData.getGameboard()[randomIndex].textContent) {
+            randomIndex = Math.floor(Math.random() * (8 - 0 + 1) + 0);
+        }
+        return gameboardData.getGameboard()[randomIndex]
+
+    }
+
+    /*Sets the logic for conditions for the ending of the game: win or a draw.*/ 
     function checkForGameOver() {
 
         //CHECK FOR ROW WINS:
@@ -155,18 +156,22 @@ const gameControl = (() => {
                 return true;
             };
 
-        if (moves == 0) return true;
+        if (totalMoves == 0) return true;
     }
 
+    /*Changes current player. If the next round is AIs turn, call setMark immediatley for AI to make its move. Else change current player to player to wait for user to make their move.*/
     function changeCurrentPlayer() {
-        if (currentPlayer == player1) currentPlayer = player2;
+        if (currentPlayer == player1) {
+            currentPlayer = computerAI;
+            setMark();
+        }
         else currentPlayer = player1;
     }
 
       /*Sets the correct message to be displayed for user when the game is over and calls the displayController to show it and prompt a newgame option*/ 
       function gameOver() {
         let message;
-        if (moves == 0 && win == false) message = "IT'S A DRAW"
+        if (totalMoves == 0 && win == false) message = "IT'S A DRAW."
         else message = currentPlayer.mark + " WINS!"
         displayController.showGameOver(message);
     }
