@@ -5,7 +5,10 @@ const player = function (mark) {
     }
 }
 
-
+/*
+Next step is to keep track of empty squares (array of empty indexes) sp that AI can schoose the id of the square of them, 
+instead of "keep guessin" of all the of the board until it finds a empty square
+*/
 //MODULE FOR HANDLING GAMEBOARD DATA
 const gameboardData = (() => {
 
@@ -117,6 +120,10 @@ const gameControl = (() => {
     /*
     Randomly chooses an empty square from the gameboard array for the AI to set mark on. 
     */
+    /*
+Next step is to keep track of empty squares (array of empty indexes) sp that AI can schoose the id of the square of them, 
+instead of "keep guessin" of all the of the board until it finds a empty square
+*/
     function aiChooseSquare() {
         let randomIndex = Math.floor(Math.random() * (8 - 0 + 1) + 0);
         while (gameboardData.getGameboard()[randomIndex].textContent) {
