@@ -13,6 +13,7 @@ instead of "keep guessin" of all the of the board until it finds a empty square
 const gameboardData = (() => {
 
     let gameboard = [];
+    let freeSquares = [];
 
     function createGameboard() {
         gameboard = [];
@@ -23,7 +24,12 @@ const gameboardData = (() => {
             newSquare.setAttribute('id', i);
             newSquare.addEventListener('click', referenceFunction = (e) => gameControl.setMark(e.target));
             gameboard.push(newSquare);
+            freeSquares.push(newSquare);
         }
+    }
+
+    function getFreeSquares() {
+        return freeSquares;
     }
 
     function getGameboard() {
@@ -32,7 +38,8 @@ const gameboardData = (() => {
 
     return {
         createGameboard,
-        getGameboard
+        getGameboard,
+        getFreeSquares
     }
 })();
 
@@ -84,7 +91,7 @@ const gameControl = (() => {
     let currentPlayer;
     let totalMoves;
     let win;
-    
+
     newGame();
 
     //Sets up a new game by reseting all previous conditions and clears the gameboard and renders an empty gameboard.
@@ -112,24 +119,19 @@ const gameControl = (() => {
         }
         if (square.textContent || win) return;
         square.textContent = currentPlayer.mark;
+        gameboardData.getFreeSquares().splice(gameboardData.getFreeSquares().indexOf(square), 1);
         totalMoves--;
         if (checkForGameOver()) gameOver();
         else changeCurrentPlayer();
     }
 
     /*
-    Randomly chooses an empty square from the gameboard array for the AI to set mark on. 
+    Randomly chooses an empty square from the gameboard free squares array for the AI to set mark on. 
     */
-    /*
-Next step is to keep track of empty squares (array of empty indexes) sp that AI can schoose the id of the square of them, 
-instead of "keep guessin" of all the of the board until it finds a empty square
-*/
     function aiChooseSquare() {
-        let randomIndex = Math.floor(Math.random() * (8 - 0 + 1) + 0);
-        while (gameboardData.getGameboard()[randomIndex].textContent) {
-            randomIndex = Math.floor(Math.random() * (8 - 0 + 1) + 0);
-        }
-        return gameboardData.getGameboard()[randomIndex]
+        let randomIndex = Math.floor(Math.random() * (gameboardData.getFreeSquares().length));
+        let indexById = gameboardData.getFreeSquares()[randomIndex].id;
+        return gameboardData.getGameboard()[indexById];
     }
 
     /*
