@@ -114,8 +114,10 @@ const gameControl = (() => {
     */
     async function setMark(square) {
         if (currentPlayer == computerAI) {
+            //disableGameboard();
             await sleep(600);
             square = aiChooseSquare();
+            //activateGameboard();
         }
         if (square.textContent || win) return;
         square.textContent = currentPlayer.mark;
