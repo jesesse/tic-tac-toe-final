@@ -7,17 +7,18 @@
 h1 {
     margin-bottom: 0;
     margin-top: 0;
+    color: white;
 }
 
 body {
     padding: 0;
     margin: 0;
-    background-color: rgb(132, 139, 144);
+    background-color: rgb(48, 33, 53);
 }
 
 header{
     padding: 10px;
-    background-color: rgb(161, 173, 176);
+    background-color: rgb(52, 46, 58);
     text-align: center;
 }
 
@@ -42,7 +43,7 @@ main {
 
 .gameboard{
     display: grid;
-    background-color:beige;
+    background-color:rgb(116, 116, 96);
     grid-template-columns: repeat(3, 100px);
     grid-template-rows: repeat(3, 100px);
 }

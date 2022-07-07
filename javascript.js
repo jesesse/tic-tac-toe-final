@@ -22,10 +22,14 @@ const gameboardData = (() => {
             let newSquare = document.createElement('div');
             newSquare.classList.add('square');
             newSquare.setAttribute('id', i);
-            newSquare.addEventListener('click', referenceFunction = (e) => gameControl.setMark(e.target));
+            newSquare.addEventListener('click', (e) => gameControl.playRound(e.target));
             gameboard.push(newSquare);
             freeSquares.push(newSquare);
         }
+    }
+
+    function setMark(square, currentPlayer) {
+        square.textContent = currentPlayer.mark;
     }
 
     function getFreeSquares() {
@@ -37,6 +41,7 @@ const gameboardData = (() => {
     }
 
     return {
+        setMark,
         createGameboard,
         getGameboard,
         getFreeSquares
@@ -91,6 +96,7 @@ const gameControl = (() => {
     let currentPlayer;
     let totalMoves;
     let win;
+    let tie;
 
     newGame();
 
@@ -101,6 +107,7 @@ const gameControl = (() => {
         currentPlayer = player1;
         totalMoves = 9;
         win = false;
+        tie = false;
         gameboardData.createGameboard();
         displayController.renderGameboard();
         displayController.clearGameOver();
@@ -112,28 +119,62 @@ const gameControl = (() => {
     If not, changeplayer and continue the game. If square is already filled or game is already won, cannot click the square.
     This function first launches when a player has pressed a gameboard square. And after that it is automatically called again for AIs turn. 
     */
-    async function setMark(square) {
+    async function playRound(square) {
         if (currentPlayer == computerAI) {
             //disableGameboard();
-            await sleep(600);
             square = aiChooseSquare();
+            await sleep(600);
             //activateGameboard();
         }
+
         if (square.textContent || win) return;
-        square.textContent = currentPlayer.mark;
+
+        gameboardData.setMark(square, currentPlayer);
         gameboardData.getFreeSquares().splice(gameboardData.getFreeSquares().indexOf(square), 1);
         totalMoves--;
-        if (checkForGameOver()) gameOver();
-        else changeCurrentPlayer();
+        
+        checkForGameOver();
+
+        if (win) displayController.showGameOver(currentPlayer.mark + " WINS!"); 
+        else if (tie) displayController.showGameOver("Its a tie");
+        else {
+            if (currentPlayer == player1) {
+                currentPlayer = computerAI;
+                playRound();
+            }
+            else currentPlayer = player1;
+        }
     }
 
     /*
     Randomly chooses an empty square from the gameboard free squares array for the AI to set mark on. 
     */
     function aiChooseSquare() {
-        let randomIndex = Math.floor(Math.random() * (gameboardData.getFreeSquares().length));
-        let indexById = gameboardData.getFreeSquares()[randomIndex].id;
-        return gameboardData.getGameboard()[indexById];
+        // let randomIndex = Math.floor(Math.random() * (gameboardData.getFreeSquares().length));
+        // let indexById = gameboardData.getFreeSquares()[randomIndex].id;
+        // return gameboardData.getGameboard()[indexById];
+
+        let bestScore = +Infinity;
+        let bestMove;
+        for (i = 0; i < gameboardData.getFreeSquares().length; i++) {
+            let indexById = gameboardData.getFreeSquares()[i].id;
+            let trySquare = gameboardData.getGameboard()[indexById];
+            gameboardData.setMark(trySquare, currentPlayer);
+            let score = minimax(gameboardData.getGameboard(), true);
+            gameboardData.getGameboard()[indexById].textContent = '';
+
+            if (score < bestScore) {
+                bestScore = score;
+                bestMove = gameboardData.getGameboard()[indexById];
+            }
+        }
+
+        return bestMove;
+    }
+
+    function minimax(board, depth, isMaximazing) {
+        return -1;
+
     }
 
     /*
@@ -146,7 +187,7 @@ const gameControl = (() => {
                 gameboardData.getGameboard()[i + 1].textContent == currentPlayer.mark &&
                 gameboardData.getGameboard()[i + 2].textContent == currentPlayer.mark) {
                 win = true;
-                return true;
+            
             }
         }
         //CHECK FOR COLUMN WINS:
@@ -155,7 +196,7 @@ const gameControl = (() => {
                 gameboardData.getGameboard()[i + 3].textContent == currentPlayer.mark &&
                 gameboardData.getGameboard()[i + 6].textContent == currentPlayer.mark) {
                 win = true;
-                return true;
+               
             }
         }
         //CHECK FOR DIAGONAL WINS:
@@ -163,43 +204,21 @@ const gameControl = (() => {
             gameboardData.getGameboard()[4].textContent == currentPlayer.mark &&
             gameboardData.getGameboard()[8].textContent == currentPlayer.mark) {
             win = true;
-            return true;
+           
         }
 
         if (gameboardData.getGameboard()[2].textContent == currentPlayer.mark &&
             gameboardData.getGameboard()[4].textContent == currentPlayer.mark &&
             gameboardData.getGameboard()[6].textContent == currentPlayer.mark) {
             win = true;
-            return true;
+           
         };
 
-        if (totalMoves == 0) return true;
-    }
-
-    /*
-    Changes current player. If the next round is AIs turn, call setMark immediatley for AI to make its move. 
-    Else change current player to player to wait for user to make their move.
-    */
-    function changeCurrentPlayer() {
-        if (currentPlayer == player1) {
-            currentPlayer = computerAI;
-            setMark();
-        }
-        else currentPlayer = player1;
-    }
-
-    /*
-    Sets the correct message to be displayed for user when the game is over and calls the displayController to show it and prompt a newgame option
-    */
-    function gameOver() {
-        let message;
-        if (totalMoves == 0 && win == false) message = "IT'S A DRAW."
-        else message = currentPlayer.mark + " WINS!"
-        displayController.showGameOver(message);
+        if (totalMoves == 0) tie = true;
     }
 
     return {
-        setMark,
+        playRound,
         newGame
     }
 
