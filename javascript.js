@@ -13,7 +13,6 @@ instead of "keep guessin" of all the of the board until it finds a empty square
 const gameboardData = (() => {
 
     let gameboard = [];
-    let freeSquares = [];
 
     function createGameboard() {
         gameboard = [];
@@ -24,16 +23,11 @@ const gameboardData = (() => {
             newSquare.setAttribute('id', i);
             newSquare.addEventListener('click', (e) => gameControl.playRound(e.target));
             gameboard.push(newSquare);
-            freeSquares.push(newSquare);
         }
     }
 
     function setMark(square, currentPlayer) {
         square.textContent = currentPlayer.mark;
-    }
-
-    function getFreeSquares() {
-        return freeSquares;
     }
 
     function getGameboard() {
@@ -44,7 +38,6 @@ const gameboardData = (() => {
         setMark,
         createGameboard,
         getGameboard,
-        getFreeSquares
     }
 })();
 
@@ -125,7 +118,6 @@ const gameControl = (() => {
 
         if (square.textContent) return;
         gameboardData.setMark(square, currentPlayer);
-        gameboardData.getFreeSquares().splice(gameboardData.getFreeSquares().indexOf(square), 1);
 
         checkForGameOver();
 
@@ -139,35 +131,38 @@ const gameControl = (() => {
         }
     }
 
+
     /*
     Randomly chooses an empty square from the gameboard free squares array for the AI to set mark on. 
     */
     function aiChooseSquare() {
-        // let randomIndex = Math.floor(Math.random() * (gameboardData.getFreeSquares().length));
-        // let indexById = gameboardData.getFreeSquares()[randomIndex].id;
-        // return gameboardData.getGameboard()[indexById];
 
         let bestScore = +Infinity;
         let bestMove;
-        for (let i = 0; i < gameboardData.getFreeSquares().length; i++) {
-            let indexById = gameboardData.getFreeSquares()[i].id;
-            let square = gameboardData.getGameboard()[indexById];
+        let board = gameboardData.getGameboard();
 
-            square.textContent = currentPlayer.mark;
-            gameboardData.getFreeSquares().splice(gameboardData.getFreeSquares().indexOf(square), 1);
-            let score = minimax(gameboardData.getGameboard(), true);
+        // Go through every gameboard square, and for each of them, calculate all the possible game scenarios, 
+        // and based on that, determine which is the best square to place your mark.
+        for (let i = 0; i < board.length; i++) {
 
-            gameboardData.getGameboard()[indexById].textContent = '';
-            gameboardData.getFreeSquares().push(gameboardData.getFreeSquares().indexOf(square), 1);  // NÄMÄ PITÄÄ LAITTA MYÖS TUONNE MINIMAXIIN JA KAI NE PITÄÄ KATTOO KOKO TAULUKOSTA (EI VAPAISTA KU NIIT EI OO!
+            if (board[i].textContent) continue;         //If square is taken, move to a next square
 
-            if (score < bestScore) {
+            board[i].textContent = currentPlayer.mark;  //place a mark to see if this is the best possible move
+
+            let score = minimax(board, true);           // with the move on the board, recursively go see all the possible game scenarios with this move and evaluate how good the move is.
+
+            if (score < bestScore) {                    // if the move is better than the previous best move, then this is the best move for now.
                 bestScore = score;
-                bestMove = gameboardData.getGameboard()[indexById];
+                bestMove = board[i];                    // with the highest score, the best place to put the marker is on this index of the gameboard.
             }
+
+            board[i].textContent = '';                   // clear the board for next possible move
         }
 
-        return bestMove;
+        return bestMove;                           
+
     }
+
 
     function minimax(board, isMaximazing) {
 
@@ -177,12 +172,10 @@ const gameControl = (() => {
             win = false;
             return -10;
         }
-
         if (win && currentPlayer == player1) {
             win = false;
             return 10;
         }
-
         if (tie) {
             tie = false;
             return 0;
@@ -190,43 +183,40 @@ const gameControl = (() => {
 
         if (isMaximazing) {
             let bestScore = -Infinity;
-            for (let i = 0; i < gameboardData.getFreeSquares().length; i++) {
-                let indexById = gameboardData.getFreeSquares()[i].id;
-                let square = gameboardData.getGameboard()[indexById];
+            for (let i = 0; i < board.length; i++) {
+                if (board[i].textContent) continue;
+
 
                 currentPlayer = player1;
+                board[i].textContent = currentPlayer.mark;
 
-                square.textContent = currentPlayer.mark;
+                let score = minimax(board, false);
+
+                bestScore = Math.max (score, bestScore)
                 
-                gameboardData.getFreeSquares().splice(gameboardData.getFreeSquares().indexOf(square), 1);
-                let score = minimax(gameboardData.getGameboard(), false);
-
-                gameboardData.getGameboard()[indexById].textContent = '';
-
-                if (score > bestScore) {
-                    bestScore = score;
-                }
-            }
-            return bestScore;
-        
-        } else {
-            let bestScore = +Infinity;
-            for (let i = 0; i < gameboardData.getFreeSquares().length; i++) {
-                let indexById = gameboardData.getFreeSquares()[i].id;
-                let square = gameboardData.getGameboard()[indexById];
-
+                board[i].textContent = '';
                 currentPlayer = computerAI;
 
-                square.textContent = currentPlayer.mark;
+            }
 
-                gameboardData.getFreeSquares().splice(gameboardData.getFreeSquares().indexOf(square), 1);
-                let score = minimax(gameboardData.getGameboard(), true);
+            return bestScore;
 
-                gameboardData.getGameboard()[indexById].textContent = '';
+        } else {
+            let bestScore = +Infinity;
+            for (let i = 0; i < board.length; i++) {
 
-                if (score < bestScore) {
-                    bestScore = score;
-                }
+                if (board[i].textContent) continue;
+
+
+                currentPlayer = computerAI;
+                board[i].textContent = currentPlayer.mark;
+
+                let score = minimax(board, true);
+
+                bestScore = Math.min(score, bestScore)
+
+                board[i].textContent = '';
+                currentPlayer = player1;
             }
 
             return bestScore;
@@ -281,7 +271,12 @@ const gameControl = (() => {
         }
 
         function checkForTie() {
-            if (gameboardData.getFreeSquares().length == 0 && win == false) return true;
+            let isTie;
+            for (let i = 0; i < gameboardData.getGameboard().length; i++) {
+                if (gameboardData.getGameboard()[i].textContent && !win) isTie = true;
+                else return false;
+            }
+            return isTie;
         }
     }
 

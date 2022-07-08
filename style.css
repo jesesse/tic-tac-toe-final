@@ -58,6 +58,10 @@ main {
     background-color: rgb(155, 155, 141);
 }
 
+.square:hover {
+    background-color: rgba(155, 155, 141, 0.914);
+}
+
 .game-over {
     display: none;
     flex-flow: column;
