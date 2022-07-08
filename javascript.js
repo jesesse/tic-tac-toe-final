@@ -149,13 +149,16 @@ const gameControl = (() => {
 
         let bestScore = +Infinity;
         let bestMove;
-        for (let i = 0; i < gameboardData.getFreeSquares().length; i++) {       
+        for (let i = 0; i < gameboardData.getFreeSquares().length; i++) {
             let indexById = gameboardData.getFreeSquares()[i].id;
+            let square = gameboardData.getGameboard()[indexById];
 
-            gameboardData.getGameboard()[indexById].textContent = currentPlayer.mark;
-            let score = minimax(gameboardData.getGameboard(), true);                           
+            square.textContent = currentPlayer.mark;
+            gameboardData.getFreeSquares().splice(gameboardData.getFreeSquares().indexOf(square), 1);
+            let score = minimax(gameboardData.getGameboard(), true);
 
             gameboardData.getGameboard()[indexById].textContent = '';
+            gameboardData.getFreeSquares().push(gameboardData.getFreeSquares().indexOf(square), 1);  // NÄMÄ PITÄÄ LAITTA MYÖS TUONNE MINIMAXIIN JA KAI NE PITÄÄ KATTOO KOKO TAULUKOSTA (EI VAPAISTA KU NIIT EI OO!
 
             if (score < bestScore) {
                 bestScore = score;
@@ -185,9 +188,50 @@ const gameControl = (() => {
             return 0;
         }
 
-        win = false;
-        tie = false;
-        return -1;
+        if (isMaximazing) {
+            let bestScore = -Infinity;
+            for (let i = 0; i < gameboardData.getFreeSquares().length; i++) {
+                let indexById = gameboardData.getFreeSquares()[i].id;
+                let square = gameboardData.getGameboard()[indexById];
+
+                currentPlayer = player1;
+
+                square.textContent = currentPlayer.mark;
+                
+                gameboardData.getFreeSquares().splice(gameboardData.getFreeSquares().indexOf(square), 1);
+                let score = minimax(gameboardData.getGameboard(), false);
+
+                gameboardData.getGameboard()[indexById].textContent = '';
+
+                if (score > bestScore) {
+                    bestScore = score;
+                }
+            }
+            return bestScore;
+        
+        } else {
+            let bestScore = +Infinity;
+            for (let i = 0; i < gameboardData.getFreeSquares().length; i++) {
+                let indexById = gameboardData.getFreeSquares()[i].id;
+                let square = gameboardData.getGameboard()[indexById];
+
+                currentPlayer = computerAI;
+
+                square.textContent = currentPlayer.mark;
+
+                gameboardData.getFreeSquares().splice(gameboardData.getFreeSquares().indexOf(square), 1);
+                let score = minimax(gameboardData.getGameboard(), true);
+
+                gameboardData.getGameboard()[indexById].textContent = '';
+
+                if (score < bestScore) {
+                    bestScore = score;
+                }
+            }
+
+            return bestScore;
+        }
+
     }
 
 
