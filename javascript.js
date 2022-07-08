@@ -19,7 +19,7 @@ const gameboardData = (() => {
         gameboard = [];
         freeSquares = [];
         for (i = 0; i < 9; i++) {
-            let newSquare = document.createElement('div');
+            let newSquare = document.createElement('button');
             newSquare.classList.add('square');
             newSquare.setAttribute('id', i);
             newSquare.addEventListener('click', (e) => gameControl.playRound(e.target));
@@ -94,7 +94,6 @@ const gameControl = (() => {
     let player1;
     let computerAI;
     let currentPlayer;
-    let totalMoves;
     let win;
     let tie;
 
@@ -105,8 +104,8 @@ const gameControl = (() => {
         player1 = player('X');
         computerAI = player('O');
         currentPlayer = player1;
-        totalMoves = 9;
         win = false;
+        tie = false;
         gameboardData.createGameboard();
         displayController.renderGameboard();
         displayController.clearGameOver();
@@ -120,21 +119,17 @@ const gameControl = (() => {
     */
     async function playRound(square) {
         if (currentPlayer == computerAI) {
-            //disableGameboard();
             square = aiChooseSquare();
-            await sleep(300);
-            //activateGameboard();
+            await sleep(400);
         }
 
-        if (square.textContent || win) return;
+        if (square.textContent) return;
         gameboardData.setMark(square, currentPlayer);
         gameboardData.getFreeSquares().splice(gameboardData.getFreeSquares().indexOf(square), 1);
-        totalMoves--;
 
         checkForGameOver();
 
-        if (win) displayController.showGameOver(currentPlayer.mark + " WINS!");
-        else if (tie) displayController.showGameOver("Its a tie");
+        if (win || tie) gameOver();
         else {
             if (currentPlayer == player1) {
                 currentPlayer = computerAI;
@@ -154,11 +149,11 @@ const gameControl = (() => {
 
         let bestScore = +Infinity;
         let bestMove;
-        for (index = 0; index < gameboardData.getFreeSquares().length; index++) {       // PAIKANSIN ONGELMAN! i HYPPÄÄ JOSTIAN SSYYSTÄ IHAN VITUSTI
-            let indexById = gameboardData.getFreeSquares()[index].id;
+        for (let i = 0; i < gameboardData.getFreeSquares().length; i++) {       
+            let indexById = gameboardData.getFreeSquares()[i].id;
 
-            gameboardData.getGameboard()[indexById].textContent = currentPlayer.mark;           
-            let score = minimax(gameboardData.getGameboard(), true);                            //ÖBAUT TÄSSÄ KOHTAA
+            gameboardData.getGameboard()[indexById].textContent = currentPlayer.mark;
+            let score = minimax(gameboardData.getGameboard(), true);                           
 
             gameboardData.getGameboard()[indexById].textContent = '';
 
@@ -204,9 +199,11 @@ const gameControl = (() => {
 
         if (checkForRows()) win = true;
         if (checkForColumns()) win = true;
+        if (checkForDiagonals()) win = true;
+        if (checkForTie()) tie = true;
 
         function checkForRows() {
-            for (i = 0; i < 7; i += 3) {
+            for (let i = 0; i < 7; i += 3) {
                 if (gameboardData.getGameboard()[i].textContent == currentPlayer.mark &&
                     gameboardData.getGameboard()[i + 1].textContent == currentPlayer.mark &&
                     gameboardData.getGameboard()[i + 2].textContent == currentPlayer.mark) {
@@ -216,7 +213,7 @@ const gameControl = (() => {
         }
 
         function checkForColumns() {
-            for (i = 0; i < 3; i++) {
+            for (let i = 0; i < 3; i++) {
                 if (gameboardData.getGameboard()[i].textContent == currentPlayer.mark &&
                     gameboardData.getGameboard()[i + 3].textContent == currentPlayer.mark &&
                     gameboardData.getGameboard()[i + 6].textContent == currentPlayer.mark) {
@@ -224,22 +221,30 @@ const gameControl = (() => {
                 }
             }
         }
-        // CHECK FOR DIAGONAL WINS:
-        if (gameboardData.getGameboard()[0].textContent == currentPlayer.mark &&
-            gameboardData.getGameboard()[4].textContent == currentPlayer.mark &&
-            gameboardData.getGameboard()[8].textContent == currentPlayer.mark) {
-            win = true;
 
+        function checkForDiagonals() {
+            if (gameboardData.getGameboard()[0].textContent == currentPlayer.mark &&
+                gameboardData.getGameboard()[4].textContent == currentPlayer.mark &&
+                gameboardData.getGameboard()[8].textContent == currentPlayer.mark) {
+                return true;
+            }
+
+            if (gameboardData.getGameboard()[2].textContent == currentPlayer.mark &&
+                gameboardData.getGameboard()[4].textContent == currentPlayer.mark &&
+                gameboardData.getGameboard()[6].textContent == currentPlayer.mark) {
+                return true;
+            };
         }
 
-        if (gameboardData.getGameboard()[2].textContent == currentPlayer.mark &&
-            gameboardData.getGameboard()[4].textContent == currentPlayer.mark &&
-            gameboardData.getGameboard()[6].textContent == currentPlayer.mark) {
-            win = true;
+        function checkForTie() {
+            if (gameboardData.getFreeSquares().length == 0 && win == false) return true;
+        }
+    }
 
-        };
-
-        //     if (totalMoves == 0) tie = true;
+    function gameOver() {
+        gameboardData.getGameboard().forEach(square => square.setAttribute('disabled', ''));
+        if (win) displayController.showGameOver(currentPlayer.mark + " WINS!");
+        if (tie) displayController.showGameOver("Its a tie");
     }
 
     return {
