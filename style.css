@@ -32,8 +32,12 @@ main {
     gap: 20px;
 }
 
-.announcement-bar {
-    height: 150px;
+.hidden{
+    display: none;
+}
+
+.easy{
+    background-color: green;
 }
 
 .container {
@@ -63,7 +67,7 @@ main {
 }
 
 .game-over {
-    display: none;
+    display: flex;
     flex-flow: column;
     align-items: center;
     width: 300px;

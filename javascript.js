@@ -52,9 +52,28 @@ const gameboardData = (() => {
 const displayController = (() => {
 
     let gameboardContainer = document.querySelector('.gameboard');
-    let gameOver = document.querySelector('.game-over');
     let gameOverText = document.querySelector('.game-over-text');
     let restartBtn = document.querySelector('.restart-Btn');
+    let easyBtn = document.querySelector('.easy');
+    let hardBtn = document.querySelector('.unbeatable');
+
+    restartBtn.addEventListener('click', () => gameControl.newGame())
+
+    easyBtn.addEventListener('click', () => {
+        gameControl.setDifficulty("easy");
+        hardBtn.style = 'none';
+        easyBtn.style = 'background-color: green';
+        gameControl.newGame();
+    });
+
+
+    hardBtn.addEventListener('click', () => {
+        gameControl.setDifficulty("unbeatable");
+        easyBtn.style = 'background-color: white';
+        hardBtn.style = 'background-color: green'
+        gameControl.newGame();
+    });
+    
 
     function renderGameboard() {
         while (gameboardContainer.lastChild) gameboardContainer.removeChild(gameboardContainer.lastChild);
@@ -63,16 +82,17 @@ const displayController = (() => {
         }
     }
 
+
     function showGameOver(message) {
         gameOverText.textContent = message;
-        gameOver.style.display = 'flex';
+        
     }
 
     function clearGameOver() {
-        gameOver.style.display = 'none';
+        gameOverText.textContent = '';
     }
 
-    restartBtn.addEventListener('click', () => gameControl.newGame())
+    
 
     return {
         renderGameboard,
@@ -95,13 +115,18 @@ const gameControl = (() => {
     let currentPlayer;
     let win;
     let tie;
+    let difficulty = "easy";
+
+    function setDifficulty(aiLevel) {
+        difficulty = aiLevel;
+    }
 
     newGame();
 
     //Sets up a new game by reseting all previous conditions and clears the gameboard and renders an empty gameboard.
     function newGame() {
         player1 = player('X');
-        ai = computerAI('O', 'easy');
+        ai = computerAI('O', difficulty);
         currentPlayer = player1;
         win = false;
         tie = false;
@@ -306,7 +331,8 @@ const gameControl = (() => {
 
     return {
         playRound,
-        newGame
+        newGame,
+        setDifficulty
     }
 
 })();
