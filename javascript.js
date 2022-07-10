@@ -5,6 +5,13 @@ const player = function (mark) {
     }
 }
 
+const computerAI = function (mark, difficulty) {
+    return {
+        mark,
+        difficulty
+    }
+}
+
 /*
 Next step is to keep track of empty squares (array of empty indexes) sp that AI can schoose the id of the square of them, 
 instead of "keep guessin" of all the of the board until it finds a empty square
@@ -16,7 +23,6 @@ const gameboardData = (() => {
 
     function createGameboard() {
         gameboard = [];
-        freeSquares = [];
         for (i = 0; i < 9; i++) {
             let newSquare = document.createElement('button');
             newSquare.classList.add('square');
@@ -85,7 +91,7 @@ const gameControl = (() => {
     }
 
     let player1;
-    let computerAI;
+    let ai;
     let currentPlayer;
     let win;
     let tie;
@@ -95,7 +101,7 @@ const gameControl = (() => {
     //Sets up a new game by reseting all previous conditions and clears the gameboard and renders an empty gameboard.
     function newGame() {
         player1 = player('X');
-        computerAI = player('O');
+        ai = computerAI('O', 'easy');
         currentPlayer = player1;
         win = false;
         tie = false;
@@ -111,7 +117,7 @@ const gameControl = (() => {
     This function first launches when a player has pressed a gameboard square. And after that it is automatically called again for AIs turn. 
     */
     async function playRound(square) {
-        if (currentPlayer == computerAI) {
+        if (currentPlayer == ai) {
             square = aiChooseSquare();
             await sleep(400);
         }
@@ -124,7 +130,7 @@ const gameControl = (() => {
         if (win || tie) gameOver();
         else {
             if (currentPlayer == player1) {
-                currentPlayer = computerAI;
+                currentPlayer = ai;
                 playRound();
             }
             else currentPlayer = player1;
@@ -137,29 +143,41 @@ const gameControl = (() => {
     */
     function aiChooseSquare() {
 
-        let bestScore = +Infinity;
-        let bestMove;
-        let board = gameboardData.getGameboard();
+        if (ai.difficulty == "easy") {
 
-        // Go through every gameboard square, and for each of them, calculate all the possible game scenarios, 
-        // and based on that, determine which is the best square to place your mark.
-        for (let i = 0; i < board.length; i++) {
+            let i = Math.floor(Math.random() * (gameboardData.getGameboard().length))
 
-            if (board[i].textContent) continue;         //If square is taken, move to a next square
-
-            board[i].textContent = currentPlayer.mark;  //place a mark to see if this is the best possible move
-
-            let score = minimax(board, true);           // with the move on the board, recursively go see all the possible game scenarios with this move and evaluate how good the move is.
-
-            if (score < bestScore) {                    // if the move is better than the previous best move, then this is the best move for now.
-                bestScore = score;
-                bestMove = board[i];                    // with the highest score, the best place to put the marker is on this index of the gameboard.
+            while (gameboardData.getGameboard()[i].textContent) {
+                i = Math.floor(Math.random() * (gameboardData.getGameboard().length))
             }
-
-            board[i].textContent = '';                   // clear the board for next possible move
+            return gameboardData.getGameboard()[i];            
         }
 
-        return bestMove;                           
+        else {
+            let bestScore = +Infinity;
+            let bestMove;
+            let board = gameboardData.getGameboard();
+
+            // Go through every gameboard square, and for each of them, calculate all the possible game scenarios, 
+            // and based on that, determine which is the best square to place your mark.
+            for (let i = 0; i < board.length; i++) {
+
+                if (board[i].textContent) continue;         //If square is taken, move to a next square
+
+                board[i].textContent = currentPlayer.mark;  //place a mark to see if this is the best possible move
+
+                let score = minimax(board, true);           // with the move on the board, recursively go see all the possible game scenarios with this move and evaluate how good the move is.
+
+                if (score < bestScore) {                    // if the move is better than the previous best move, then this is the best move for now.
+                    bestScore = score;
+                    bestMove = board[i];                    // with the highest score, the best place to put the marker is on this index of the gameboard.
+                }
+
+                board[i].textContent = '';                   // clear the board for next possible move
+            }
+
+            return bestMove;
+        }
 
     }
 
@@ -168,7 +186,7 @@ const gameControl = (() => {
 
         checkForGameOver();
 
-        if (win && currentPlayer == computerAI) {
+        if (win && currentPlayer == ai) {
             win = false;
             return -10;
         }
@@ -192,10 +210,10 @@ const gameControl = (() => {
 
                 let score = minimax(board, false);
 
-                bestScore = Math.max (score, bestScore)
-                
+                bestScore = Math.max(score, bestScore)
+
                 board[i].textContent = '';
-                currentPlayer = computerAI;
+                currentPlayer = ai;
 
             }
 
@@ -208,7 +226,7 @@ const gameControl = (() => {
                 if (board[i].textContent) continue;
 
 
-                currentPlayer = computerAI;
+                currentPlayer = ai;
                 board[i].textContent = currentPlayer.mark;
 
                 let score = minimax(board, true);
